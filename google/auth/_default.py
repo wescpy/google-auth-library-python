@@ -349,6 +349,7 @@ def default(scopes=None, request=None, quota_project_id=None):
                     "environment variable",
                     environment_vars.PROJECT,
                 )
+            _LOGGER.info("GOOGLE_AUTH_DEBUG: credentials type is: {}".format(type(credentials)))
             return credentials, effective_project_id
 
     raise exceptions.DefaultCredentialsError(_HELP_MESSAGE)
