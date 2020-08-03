@@ -67,10 +67,10 @@ class Credentials(credentials.ReadOnlyScoped, credentials.Credentials):
             quota_project_id (Optional[str]): The project ID used for quota and
                 billing.
         """
-        _LOGGER.info("GOOGLE_AUTH_DEBUG: creating google.auth.compute_engine.credentials")
         super(Credentials, self).__init__()
         self._service_account_email = service_account_email
         self._quota_project_id = quota_project_id
+        _LOGGER.info("GOOGLE_AUTH_DEBUG: created {}".format(self))
 
     def _retrieve_info(self, request):
         """Retrieve information about the service account.
@@ -100,13 +100,13 @@ class Credentials(credentials.ReadOnlyScoped, credentials.Credentials):
                 service can't be reached if if the instance has not
                 credentials.
         """
-        _LOGGER.info("GOOGLE_AUTH_DEBUG: calling google.auth.compute_engine.credentials.refresh, credentials address {}, credentials expiry {}".format(self, self.expiry))
         try:
+            previous_expiry = self.expiry
             self._retrieve_info(request)
             self.token, self.expiry = _metadata.get_service_account_token(
                 request, service_account=self._service_account_email
             )
-            _LOGGER.info("GOOGLE_AUTH_DEBUG: after refresh expiry is {}".format(self.expiry))
+            _LOGGER.info("GOOGLE_AUTH_DEBUG: refreshed {}, expiry before {}, expiry now {}".format(self, previous_expiry, self.expiry))
         except exceptions.TransportError as caught_exc:
             new_exc = exceptions.RefreshError(caught_exc)
             six.raise_from(new_exc, caught_exc)
