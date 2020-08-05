@@ -22,7 +22,6 @@ Engine using the Compute Engine metadata server.
 import datetime
 import logging
 import os
-import threading
 
 import six
 
@@ -73,7 +72,7 @@ class Credentials(credentials.ReadOnlyScoped, credentials.Credentials):
         self._service_account_email = service_account_email
         self._quota_project_id = quota_project_id
         _LOGGER.info(
-            "GOOGLE_AUTH_DEBUG: pid {}, thread {}, created {}, current time {}".format(os.getpid(), threading.current_thread().name, self, _helpers.utcnow()))
+            "GOOGLE_AUTH_DEBUG: pid {}, created {}, current time {}".format(os.getpid(), self, _helpers.utcnow()))
 
     def _retrieve_info(self, request):
         """Retrieve information about the service account.
@@ -109,8 +108,8 @@ class Credentials(credentials.ReadOnlyScoped, credentials.Credentials):
             self.token, self.expiry = _metadata.get_service_account_token(
                 request, service_account=self._service_account_email
             )
-            _LOGGER.info("GOOGLE_AUTH_DEBUG: pid {}, thread {}, refreshed {}, expiry before {}, expiry now {}, current time {}".format(
-                os.getpid(), threading.current_thread().name, self, previous_expiry, self.expiry, _helpers.utcnow()))
+            _LOGGER.info("GOOGLE_AUTH_DEBUG: pid {}, refreshed {}, expiry before {}, expiry now {}, current time {}".format(
+                os.getpid(), self, previous_expiry, self.expiry, _helpers.utcnow()))
         except exceptions.TransportError as caught_exc:
             new_exc = exceptions.RefreshError(caught_exc)
             six.raise_from(new_exc, caught_exc)
