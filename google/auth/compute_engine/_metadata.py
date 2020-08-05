@@ -254,4 +254,6 @@ def get_service_account_token(request, service_account="default"):
     token_expiry = _helpers.utcnow() + datetime.timedelta(
         seconds=token_json["expires_in"]
     )
+    _LOGGER.info("GOOGLE_AUTH_DEBUG: token endpoint returned expires_in {}, current time {}, token_expiry after refresh {}".format(
+        token_json["expires_in"], _helpers.utcnow(), token_expiry))
     return token_json["access_token"], token_expiry

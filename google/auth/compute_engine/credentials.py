@@ -70,7 +70,8 @@ class Credentials(credentials.ReadOnlyScoped, credentials.Credentials):
         super(Credentials, self).__init__()
         self._service_account_email = service_account_email
         self._quota_project_id = quota_project_id
-        _LOGGER.info("GOOGLE_AUTH_DEBUG: created {}".format(self))
+        _LOGGER.info(
+            "GOOGLE_AUTH_DEBUG: created {}, current time {}".format(self, _helpers.utcnow()))
 
     def _retrieve_info(self, request):
         """Retrieve information about the service account.
@@ -106,7 +107,8 @@ class Credentials(credentials.ReadOnlyScoped, credentials.Credentials):
             self.token, self.expiry = _metadata.get_service_account_token(
                 request, service_account=self._service_account_email
             )
-            _LOGGER.info("GOOGLE_AUTH_DEBUG: refreshed {}, expiry before {}, expiry now {}".format(self, previous_expiry, self.expiry))
+            _LOGGER.info("GOOGLE_AUTH_DEBUG: refreshed {}, expiry before {}, expiry now {}, current time {}".format(
+                self, previous_expiry, self.expiry, _helpers.utcnow()))
         except exceptions.TransportError as caught_exc:
             new_exc = exceptions.RefreshError(caught_exc)
             six.raise_from(new_exc, caught_exc)
