@@ -127,7 +127,16 @@ def _get_gcloud_sdk_credentials():
 def _get_explicit_environ_credentials():
     """Gets credentials from the GOOGLE_APPLICATION_CREDENTIALS environment
     variable."""
+    from google.auth import _cloud_sdk
+
+    cloud_sdk_adc_path = _cloud_sdk.get_application_default_credentials_path()
     explicit_file = os.environ.get(environment_vars.CREDENTIALS)
+
+    if explicit_file is not None and explicit_file == cloud_sdk_adc_path:
+        # Cloud sdk flow calls gcloud to fetch project id, so if the explicit
+        # file path is cloud sdk credentials path, then we should fall back
+        # to cloud sdk flow, otherwise project id cannot be obtained.
+        return _get_gcloud_sdk_credentials()
 
     if explicit_file is not None:
         credentials, project_id = load_credentials_from_file(
@@ -187,10 +196,11 @@ def default_async(scopes=None, request=None, quota_project_id=None):
             gcloud config set project
 
     3. If the application is running in the `App Engine standard environment`_
-       then the credentials and project ID from the `App Identity Service`_
-       are used.
-    4. If the application is running in `Compute Engine`_ or the
-       `App Engine flexible environment`_ then the credentials and project ID
+       (first generation) then the credentials and project ID from the
+       `App Identity Service`_ are used.
+    4. If the application is running in `Compute Engine`_ or `Cloud Run`_ or
+       the `App Engine flexible environment`_ or the `App Engine standard
+       environment`_ (second generation) then the credentials and project ID
        are obtained from the `Metadata Service`_.
     5. If no credentials are found,
        :class:`~google.auth.exceptions.DefaultCredentialsError` will be raised.
@@ -206,6 +216,7 @@ def default_async(scopes=None, request=None, quota_project_id=None):
             /appengine/flexible
     .. _Metadata Service: https://cloud.google.com/compute/docs\
             /storing-retrieving-metadata
+    .. _Cloud Run: https://cloud.google.com/run
 
     Example::
 

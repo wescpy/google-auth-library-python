@@ -155,6 +155,49 @@ def test_get_success_text():
     assert result == data
 
 
+def test_get_success_params():
+    data = "foobar"
+    request = make_request(data, headers={"content-type": "text/plain"})
+    params = {"recursive": "true"}
+
+    result = _metadata.get(request, PATH, params=params)
+
+    request.assert_called_once_with(
+        method="GET",
+        url=_metadata._METADATA_ROOT + PATH + "?recursive=true",
+        headers=_metadata._METADATA_HEADERS,
+    )
+    assert result == data
+
+
+def test_get_success_recursive_and_params():
+    data = "foobar"
+    request = make_request(data, headers={"content-type": "text/plain"})
+    params = {"recursive": "false"}
+    result = _metadata.get(request, PATH, recursive=True, params=params)
+
+    request.assert_called_once_with(
+        method="GET",
+        url=_metadata._METADATA_ROOT + PATH + "?recursive=true",
+        headers=_metadata._METADATA_HEADERS,
+    )
+    assert result == data
+
+
+def test_get_success_recursive():
+    data = "foobar"
+    request = make_request(data, headers={"content-type": "text/plain"})
+
+    result = _metadata.get(request, PATH, recursive=True)
+
+    request.assert_called_once_with(
+        method="GET",
+        url=_metadata._METADATA_ROOT + PATH + "?recursive=true",
+        headers=_metadata._METADATA_HEADERS,
+    )
+    assert result == data
+
+
 def test_get_success_custom_root_new_variable():
     request = make_request("{}", headers={"content-type": "application/json"})
 
@@ -269,6 +312,44 @@ def test_get_service_account_token(utcnow):
     request.assert_called_once_with(
         method="GET",
         url=_metadata._METADATA_ROOT + PATH + "/token",
+        headers=_metadata._METADATA_HEADERS,
+    )
+    assert token == "token"
+    assert expiry == utcnow() + datetime.timedelta(seconds=ttl)
+
+
+@mock.patch("google.auth._helpers.utcnow", return_value=datetime.datetime.min)
+def test_get_service_account_token_with_scopes_list(utcnow):
+    ttl = 500
+    request = make_request(
+        json.dumps({"access_token": "token", "expires_in": ttl}),
+        headers={"content-type": "application/json"},
+    )
+
+    token, expiry = _metadata.get_service_account_token(request, scopes=["foo", "bar"])
+
+    request.assert_called_once_with(
+        method="GET",
+        url=_metadata._METADATA_ROOT + PATH + "/token" + "?scopes=foo%2Cbar",
+        headers=_metadata._METADATA_HEADERS,
+    )
+    assert token == "token"
+    assert expiry == utcnow() + datetime.timedelta(seconds=ttl)
+
+
+@mock.patch("google.auth._helpers.utcnow", return_value=datetime.datetime.min)
+def test_get_service_account_token_with_scopes_string(utcnow):
+    ttl = 500
+    request = make_request(
+        json.dumps({"access_token": "token", "expires_in": ttl}),
+        headers={"content-type": "application/json"},
+    )
+
+    token, expiry = _metadata.get_service_account_token(request, scopes="foo,bar")
+
+    request.assert_called_once_with(
+        method="GET",
+        url=_metadata._METADATA_ROOT + PATH + "/token" + "?scopes=foo%2Cbar",
         headers=_metadata._METADATA_HEADERS,
     )
     assert token == "token"
